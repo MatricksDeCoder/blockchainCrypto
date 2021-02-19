@@ -38,7 +38,7 @@ class Wallet {
 
         let outputsSum = 0
         let hasTransacted = false
-        for(let i=chain.length-1; i<0; i--) {
+        for(let i=chain.length-1; i>0; i--) {
             let block = chain[i]
             let data  = block.data
             for( let tx of data) {

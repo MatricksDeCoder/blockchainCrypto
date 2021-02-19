@@ -1,6 +1,7 @@
-const {GENESIS_DATA, MINE_RATAE}   = require('../../config')
+const {GENESIS_DATA, MINE_RATE, REWARD_INPUT, MINING_REWARD}   = require('../../config')
 const {cryptoHash}     = require('../CryptographyUtils')
 const Block           = require('../Block')
+const Transaction = require('../Wallet/transaction')
 
 class Blockchain {
 
@@ -21,8 +22,6 @@ class Blockchain {
 
             const lastdifficulty = chain[i-1].difficulty
 
-
-
             if( lastHash !== actualLastHash) {
                 return false
             }
@@ -36,6 +35,33 @@ class Blockchain {
             }
         }
         // check any block data has not been tempered
+        return true
+    }
+
+    validTransactionData({chain}) {
+        for(let i=0; i<chain.lenght; i++) {
+            const block = chain[i]
+            let rewardTxCount = 0
+            for(let tx of block.data) {
+                if(tx.input.address === REWARD_INPUT) {
+                    rewardTxCount += 1;
+                    if(rewardTxCount > 1) {
+                        console.error('Miner rewards exceed limit! ')
+                        return false
+                    }
+                }
+
+                if(Object.values(tx.outputMap)[0] !== MINING_REWARD) {
+                    console.error('Miner reward is invalid! ')
+                    return false
+                } else {
+                    if(!Transaction.validTransaction(tx)) {
+                        console.error('Invalid transaction! ')
+                        return false
+                    }
+                }
+            }
+        }
         return true
     }
 

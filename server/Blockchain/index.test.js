@@ -1,7 +1,9 @@
-const Block         = require('../Block')
-const Blockchain    = require('.')
-const {GENESIS_DATA}  = require('../../config')
-const {cryptoHash}     = require('../CryptographyUtils')
+const Block          = require('../Block')
+const Blockchain     = require('.')
+const {GENESIS_DATA} = require('../../config')
+const {cryptoHash}   = require('../CryptographyUtils');
+const Wallet         = require('../Wallet');
+const Transaction    = require('../Wallet/transaction');
 
 describe('Blockchain',  () => {
 
@@ -164,6 +166,87 @@ describe('Blockchain',  () => {
             
         })
         
+    })
+
+    describe('validTransactionData()', () => {
+
+        let tx, rewardTx, wallet
+        beforeEach(() => {
+            wallet   = new Wallet()
+            tx       = wallet.createTransaction({recepient:'foo', amount:50})
+            rewardTx = Transaction.rewardTransaction({minerWallet: wallet})
+        })
+
+        describe('and the transaction data is valid', () => {
+            it('returns true', () => {
+                newChain.addBlock({data: [tx, rewardTx]})
+                expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(true))
+            })
+        })
+
+        describe('and the transaction data has multiple rewards', () => {
+            it('returns false', () => {
+                newChain.addBlock({data: [tx, rewardTx, rewardTx]})
+                expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+            })
+        })
+
+        describe('and the transaction data has at least one incorrect outputMap', () => {
+
+            describe(' tx is not a reward transaction', () => {
+                it('returns false', () => {
+                    tx.outputMap[wallet.publicKey] = 10000
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+
+            describe('tx is a reward transaction', () => {
+                it('returns false', () => {
+                    rewardTx.outputMap[wallet.publicKey] = 10000
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+            
+        })    
+        
+        describe('and the transaction data has at least one incorrect inputMap', () => {
+
+            describe(' tx is not a reward transaction', () => {
+                it('returns false', () => {
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+
+            describe('tx is a reward transaction', () => {
+                it('returns false', () => {
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+            
+        })    
+        
+        describe('and the block contains non unique set of transactions', () => {
+
+            describe(' tx is not a reward transaction', () => {
+                it('returns false', () => {
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+
+            describe('tx is a reward transaction', () => {
+                it('returns false', () => {
+                    newChain.addBlock({data: [tx, rewardTx]})
+                    expect(blockchain.validTransactionData({chain: newChain.chain}).toBe(false))
+                })
+            })
+            
+        })     
+
     })
 
 });
