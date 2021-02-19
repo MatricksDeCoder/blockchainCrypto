@@ -2,6 +2,7 @@ const Transaction = require('./transaction')
 const Wallet      = require('.')
 const {verifySignature} = require('../CryptographyUtils')
 const { createTransaction } = require('./transaction')
+const {REWARD_INPUT, MINING_REWARD} = require('../../config')
 
 describe('Transaction', () => {
 
@@ -165,7 +166,24 @@ describe('Transaction', () => {
             })                                       
 
         })
-        
+
+        describe('rewardTransaction()', () => {
+
+            let rewardTransaction, minerWallet 
+
+            beforeEach(() => {
+                minerWallet = new Wallet()
+                rewardTransaction = Transaction.rewardTransaction({minerWallet})
+            })
+
+            it('has correct inputs', () => {
+                expect(rewardTransaction.input).toEqual(REWARD_INPUT)
+            })
+
+            it('has correct outputs', () => {
+                expect(rewardTransaction.outputMap[minerWallet.publicKey]).toEqual(MINING_REWARD)
+            })
+        })       
 
     })
 

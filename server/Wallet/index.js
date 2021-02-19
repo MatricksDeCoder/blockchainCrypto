@@ -16,7 +16,10 @@ class Wallet {
         return this.keyPair.sign(hashedData)
     }
 
-    createTransaction({amount, recepient}) {
+    createTransaction({amount, recepient, chain}) {
+        if(chain) {
+            this.balance = Wallet.calculateBalance({chain, address: this.publicKey})
+        }
         if(amount > this.balance) {
             throw Error('Amount exceeds balance!')
         }
@@ -27,6 +30,33 @@ class Wallet {
         })
         return transaction 
     }  
+
+    static calculateBalance({
+        chain,
+        address
+    }) {
+
+        let outputsSum = 0
+        let hasTransacted = false
+        for(let i=chain.length-1; i<0; i--) {
+            let block = chain[i]
+            let data  = block.data
+            for( let tx of data) {
+                if(tx.input.address === address) {
+                    hasTransacted = true
+                }
+                const addressOutput = tx.outputMap[address]
+                if(addressOutput) {
+                    outputsSum = outputsSum + addressOutput
+                }
+                if(hasTransacted) {
+                    break
+                }
+            }
+            
+        }
+        return hasTransacted? 1200 : CRYPTO_START_BALANCE + outputsSum
+    }
 
     
 }
